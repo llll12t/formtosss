@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory Access Requests</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- SweetAlert2 CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        @media (max-width: 768px) {
+
+            table th:nth-child(2),
+            table th:nth-child(3),
+            table td:nth-child(2),
+            table td:nth-child(3) {
+                display: none;
+                /* Hide extra columns on small screens */
+            }
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100">
+
+    <div class="max-w-full mx-auto mt-10 bg-white p-8 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-bold mb-6">Factory Access Requests</h2>
+
+        <!-- Status Filter Checkboxes -->
+        <div class="mb-6">
+            <label class="mr-4">
+                <input type="checkbox" class="status-filter" value="รอการอนุมัติ" checked>รอการอนุมัติ
+            </label>
+            <label class="mr-4">
+                <input type="checkbox" class="status-filter" value="เข้าโรงงานแล้ว" checked>เข้าโรงงานแล้ว
+            </label>
+            <label class="mr-4">
+                <input type="checkbox" class="status-filter" value="อนุมัติ" checked>อนุมัติ
+            </label>
+            <label class="mr-4">
+                <input type="checkbox" class="status-filter" value="ไม่อนุมัติ">ไม่อนุมัติ
+            </label>
+            <label class="mr-4">
+                <input type="checkbox" class="status-filter" value="ดำเนินการเสร็จสิ้น">ดำเนินการเสร็จสิ้น
+            </label>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner"></div>
+
+        <!-- Table for data -->
+        <div class="overflow-x-auto hidden" id="tableContainer"> <!-- Hidden initially until data is loaded -->
+            <table class="min-w-full table-auto text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-2 py-2">Name</th>
+                        <th class="px-2 py-2">Date</th>
+                        <th class="px-2 py-2">Check-in to Check-out</th>
+                        <th class="px-2 py-2">Status</th>
+                        <th class="px-2 py-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestTable" class="bg-white">
+                    <!-- Table rows will be populated dynamically here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const sheetDataUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=getData';
+        const updateStatusUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=updateStatus';
+        const updateTimesUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=updateTimes';
+
+        let requestData = []; // Store data for filtering
+
+        // Fetch data from Google Sheets and populate the table
+        function fetchDataAndRenderTable() {
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            fetch(sheetDataUrl)
+                .then(response => response.json())
+                .then(data => {
+                    requestData = data.slice(1); // Skip the header row
+                    filterTableByStatus(); // Initially filter based on selected statuses
+
+                    // Attach filter event listeners to checkboxes
+                    document.querySelectorAll('.status-filter').forEach(checkbox => {
+                        checkbox.addEventListener('change', filterTableByStatus);
+                    });
+
+                    // Hide loading spinner and show table
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                    document.getElementById('tableContainer').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    // Hide loading spinner on error
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                });
+        }
+
+        // Function to render the table with filtered data
+        function renderTable(data) {
+            const tableBody = document.getElementById('requestTable');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            data.forEach((row, index) => {
+                const formattedDate = formatDate(row[4]);  // Date is in column 4
+                const formattedCheckIn = formatTimeFromISO(row[5]);  // Check-in (ISO string) is in column 5
+                const formattedCheckOut = formatTimeFromISO(row[6]); // Check-out (ISO string) is in column 6
+                const details = row[3]; // Assuming details (reason) are in the 3rd column
+                const note = row[9]; // Assuming note is in the 9th column
+
+                const timeRange = `${formattedCheckIn}-${formattedCheckOut}`; // Combine Check-in and Check-out
+
+                const tr = document.createElement('tr');
+                tr.classList.add('status-row');
+                tr.setAttribute('data-status', row[8]); // Add data attribute for filtering
+
+                tr.innerHTML = `
+          <td class="border px-2 py-2">${row[2]}</td> <!-- Name -->
+          <td class="border px-2 py-2">${formattedDate}</td> <!-- Date -->
+          <td class="border px-2 py-2">${timeRange}</td> <!-- Combined Check-in to Check-out -->
+          <td class="border px-2 py-2 status-${index}">${row[8]}</td> <!-- Status -->
+          <td class="border px-2 py-2 text-center">
+            <button class="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600" onclick="updateStatus(${row[0]}, 'อนุมัติ', ${index})">อนุมัติ</button>
+            <button class="bg-red-500 text-white px-2 py-1 rounded-md hover:bg-red-600" onclick="updateStatus(${row[0]}, 'ไม่อนุมัติ', ${index})">ไม่อนุมัติ</button>
+            <button class="bg-blue-500 text-white px-2 py-1 rounded-md hover:bg-blue-600" onclick="handleProceed(${row[0]}, ${index})">ดำเนินการ</button>
+            <button class="bg-gray-500 text-white px-2 py-1 rounded-md hover:bg-gray-600" onclick="viewDetails(${index}, ${row[0]}, '${row[2]}', '${formattedDate}', '${details}', '${formattedCheckIn}', '${formattedCheckOut}', '${row[8]}', '${note}')">View</button>
+          </td>
+        `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Function to filter the table based on selected checkboxes
+        function filterTableByStatus() {
+            const selectedStatuses = Array.from(document.querySelectorAll('.status-filter:checked')).map(cb => cb.value);
+            const filteredData = requestData.filter(row => selectedStatuses.includes(row[8])); // Filter by status
+            renderTable(filteredData); // Re-render the table with filtered data
+        }
+
+        // Function to update the status (Approve/Reject)
+        function updateStatus(id, newStatus, rowIndex) {
+            Swal.fire({
+                title: `บันทึกสถาน ${newStatus} (เพิ่มเติมความเห็น) `,
+                input: 'textarea',
+                inputPlaceholder: 'เพิ่มเติม...',
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: (note) => {
+                    return note; // Return the note even if it's empty
+                }
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const note = result.value || ''; // If no note, set an empty string
+
+                    const requestData = { id: id, status: newStatus, note: note };
+
+                    // Send POST request to update status and note in Google Sheets
+                    fetch(updateStatusUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestData),
+                        mode: 'no-cors' // Use 'no-cors' if facing CORS issues
+                    })
+                        .then(() => {
+                            // Update status in the table after successful response
+                            Swal.fire('Success', 'Status and note updated successfully', 'success');
+                            document.querySelector(`.status-${rowIndex}`).textContent = newStatus;
+                        })
+                        .catch(error => {
+                            console.error('Error updating status:', error);
+                            Swal.fire('Error', 'Failed to update status', 'error');
+                        });
+                }
+            });
+        }
+
+
+        function handleProceed(id, rowIndex) {
+            const rowData = requestData.find(row => row[0] == id); // Find row data by ID
+            const existingCheckIn = rowData[10]; // Column K (actualCheckIn)
+            const existingCheckOut = rowData[11]; // Column L (actualCheckOut)
+
+            // Pre-fill the status based on existing check-in and check-out times
+            const statusSelectValue = existingCheckIn ? 'ดำเนินการเสร็จสิ้น' : 'เข้าโรงงานแล้ว';
+
+            Swal.fire({
+            title: '<h2 class="text-xl font-bold text-gray-700">ดำเนินการ: บันทึกเวลาเข้างานและออกงานจริง</h2>',
+            html: `
+            <div class="flex flex-col space-y-4">
+                <div>
+                <label class="block text-left font-medium text-gray-600">เวลาเข้า:</label>
+                <input type="time" id="actualCheckIn" class="swal2-input w-48 border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" value="${existingCheckIn ? formatTime(existingCheckIn) : ''}" ${existingCheckIn ? 'readonly' : ''}>
+                </div>
+                <div>
+                <label class="block text-left font-medium text-gray-600">เวลาออก:</label>
+                <input type="time" id="actualCheckOut" class="swal2-input w-48 border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400" value="${existingCheckOut ? formatTime(existingCheckOut) : ''}">
+                </div>
+                <div>
+                <label class="block text-left font-medium text-gray-600">สถานะ:</label>
+                <select id="statusSelect" class="swal2-input w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <option value="เข้าโรงงานแล้ว" ${!existingCheckIn ? 'selected' : ''}>เข้าโรงงานแล้ว</option>
+                    <option value="ดำเนินการเสร็จสิ้น" ${existingCheckIn ? 'selected' : ''}>ดำเนินการเสร็จสิ้น</option>
+                </select>
+                </div>
+            </div>
+            `,
+            customClass: {
+                popup: 'p-6 rounded-lg shadow-lg border',
+            },
+
+
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                cancelButtonText: 'Cancel',
+                preConfirm: () => {
+                    const actualCheckIn = document.getElementById('actualCheckIn').value;
+                    const actualCheckOut = document.getElementById('actualCheckOut').value;
+                    const newStatus = document.getElementById('statusSelect').value;
+
+                    if (!actualCheckIn) {
+                        Swal.showValidationMessage('Check-in time is required!');
+                        return null;
+                    }
+
+                    // Automatically set status based on check-out time
+                    if (actualCheckOut) {
+                        return { actualCheckIn, actualCheckOut, newStatus: 'ดำเนินการเสร็จสิ้น' };
+                    } else {
+                        return { actualCheckIn, actualCheckOut: '', newStatus };
+                    }
+                }
+            }).then(result => {
+                if (result.isConfirmed && result.value) {
+                    const { actualCheckIn, actualCheckOut, newStatus } = result.value;
+
+                    const requestData = {
+                        id: id,
+                        actualCheckIn: actualCheckIn,
+                        actualCheckOut: actualCheckOut || '', // Empty string if no check-out time
+                        status: newStatus // Update status based on the user's selection
+                    };
+
+                    // Send POST request to update actual check-in/out and status in Google Sheets
+                    fetch(updateTimesUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestData),
+                        mode: 'no-cors' // Use 'no-cors' if facing CORS issues
+                    })
+                        .then(() => {
+                            // Show success alert
+                            Swal.fire('Success', 'Actual check-in and check-out times, and status have been recorded', 'success');
+
+                            // Update the status in the table dynamically
+                            document.querySelector(`.status-${rowIndex}`).textContent = newStatus;
+
+                            // Optionally refresh the table or re-fetch data to ensure it's updated correctly
+                            fetchDataAndRenderTable();
+                        })
+                        .catch(error => {
+                            console.error('Error saving actual times and status:', error);
+                            Swal.fire('Error', 'Failed to save actual check-in and check-out times', 'error');
+                        });
+                }
+            });
+        }
+
+        // Helper function to format time to HH:mm
+        function formatTime(timeString) {
+            const time = new Date(timeString);
+            const hours = String(time.getHours()).padStart(2, '0');
+            const minutes = String(time.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+
+
+        // View full details in a modal
+        function viewDetails(rowIndex, id, name, date, details, checkin, checkout, status, note) {
+            Swal.fire({
+                title: `<h3 class="text-xl font-semibold text-left">Access Request Details</h3>`,
+                html: `
+          <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 400px; margin: 0 auto; background-color: #f9f9f9;">
+            <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Name:</strong> <span>${name}</span>
+              </p>
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Date:</strong> <span>${date}</span>
+              </p>
+            </div>
+            <div style="padding-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Details:</strong> <span>${details}</span>
+              </p>
+            </div>
+            <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Check-in:</strong> <span>${checkin}</span>
+              </p>
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Check-out:</strong> <span>${checkout}</span>
+              </p>
+            </div>
+            <div style="padding-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Status:</strong> <span>${status}</span>
+              </p>
+            </div>
+            <div style="padding-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>Note:</strong> <span>${note}</span>
+              </p>
+            </div>
+          </div>
+        `,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'swal-custom-popup',
+                }
+            });
+        }
+
+        // Helper function to format date (DD/MM/YYYY)
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Helper function to format time from ISO datetime string
+        function formatTimeFromISO(isoString) {
+            const time = new Date(isoString);
+            const hours = String(time.getHours()).padStart(2, '0');
+            const minutes = String(time.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        // Fetch data and render table on page load
+        fetchDataAndRenderTable();
+    </script>
+</body>
+
+</html>
