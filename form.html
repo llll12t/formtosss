@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factory Access Request</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Flatpickr CSS CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
+  <!-- SweetAlert2 CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold mb-6">ส่งคำขอเข้าโรงงาน</h2>
+
+    <form id="factoryForm">
+      <!-- Hidden Fields for ID and User -->
+      <input type="hidden" id="useridline" name="useridline" >
+      <input type="hidden" id="id" name="id" value="1">
+      
+      <!-- Name Field -->
+      <div class="mb-4">
+        <label for="name" class="block text-sm font-medium text-gray-700">ชื่อ สกุล</label>
+        <input type="text" id="name" name="name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="Jame Teeranan" required>
+      </div>
+
+      <!-- Reason Field -->
+      <div class="mb-4">
+        <label for="reason" class="block text-sm font-medium text-gray-700">ระบุเหตุผลการเข้า ออก โรงงาน</label>
+        <textarea id="reason" name="reason" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required></textarea>
+      </div>
+
+      <!-- Date Field -->
+      <div class="mb-4">
+        <label for="date" class="block text-sm font-medium text-gray-700">วันที่</label>
+        <input type="text" id="date" name="date" class="flatpickr-date mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="เลือกวันที่" required>
+      </div>
+
+      <!-- Check-in and Check-out Fields -->
+      <div class="mb-4">
+        <label for="checkin" class="block text-sm font-medium text-gray-700">เวลาในการเข้า</label>
+        <input type="text" id="checkin" name="checkin" class="flatpickr mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="เลือกเวลา" required>
+      </div>
+
+      <div class="mb-4">
+        <label for="checkout" class="block text-sm font-medium text-gray-700">เวลาออก</label>
+        <input type="text" id="checkout" name="checkout" class="flatpickr mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="เลือกเวลา" required>
+      </div>
+
+      <!-- Total Time Calculation (Automatically Calculated) -->
+      <div class="mb-4">
+        <label for="totalTime" class="block text-sm font-medium text-gray-700">เวลาที่ใช้ทั้งหมด</label>
+        <input type="text" id="totalTime" name="totalTime" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" readonly>
+      </div>
+
+      <!-- Notes Field -->
+      <div class="mb-4">
+        <label for="note" class="block text-sm font-medium text-gray-700">หมายเหตุ</label>
+        <textarea id="note" name="note" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="flex justify-end">
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">ส่งข้อมูล</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Flatpickr JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <script>
+    const LIFF_ID = '2005732932-dKgvBp6J'; // Liff id ไว้
+
+    window.onload = async function () {
+        await initializeLiff();
+    };
+
+    async function initializeLiff() {
+        try {
+            await liff.init({ liffId: `${LIFF_ID}` }); // Replace with your LIFF ID
+            if (liff.isLoggedIn()) {
+                getUserProfile();
+            } else {
+                liff.login();
+            }
+        } catch (error) {
+            console.error('Error initializing LIFF:', error);
+        }
+    }
+
+    async function getUserProfile() {
+        try {
+            const profile = await liff.getProfile();
+            const userId = profile.userId;
+            document.getElementById('useridline').value = userId;
+            document.getElementById('displayName').value = profile.displayName;
+            await fetchAllData(userId);
+        } catch (error) {
+            console.error('Error getting profile data:', error);
+        }
+    }
+
+    // Initialize Flatpickr for date and time
+    flatpickr(".flatpickr", {
+      enableTime: true,
+      noCalendar: true,
+      dateFormat: "H:i",
+      time_24hr: true
+    });
+    
+    flatpickr(".flatpickr-date", {
+      dateFormat: "d/m/Y"
+    });
+
+    // Function to calculate total time between checkin and checkout
+    document.getElementById('checkout').addEventListener('change', function() {
+      var checkinTime = document.getElementById('checkin').value;
+      var checkoutTime = document.getElementById('checkout').value;
+      
+      if (checkinTime && checkoutTime) {
+        var checkin = new Date('1970-01-01 ' + checkinTime);
+        var checkout = new Date('1970-01-01 ' + checkoutTime);
+        var diffMs = checkout - checkin;
+        var diffMins = Math.floor(diffMs / 1000 / 60);
+        var hours = Math.floor(diffMins / 60);
+        var minutes = diffMins % 60;
+        
+        document.getElementById('totalTime').value = hours + ' ชั่วโมง ' + minutes + ' นาที';
+      }
+    });
+
+    // Form submission logic with SweetAlert2 confirmation
+    document.getElementById('factoryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Show confirmation dialog
+      Swal.fire({
+        title: 'ยืนยันการส่งข้อมูล?',
+        text: 'คุณต้องการส่งคำขอเข้าโรงงานหรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ใช่, ส่งเลย!',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Prepare form data as an object
+          var formData = {
+            id: document.getElementById('id').value,
+            useridline: document.getElementById('useridline').value,
+            name: document.getElementById('name').value,
+            date: document.getElementById('date').value,
+            checkin: document.getElementById('checkin').value,
+            checkout: document.getElementById('checkout').value,
+            reason: document.getElementById('reason').value,
+            note: document.getElementById('note').value,
+            totalTime: document.getElementById('totalTime').value,
+            status: "รอการอนุมัติ"
+          };
+
+          // Send data via POST request to the Google Apps Script
+          fetch('https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData),
+            mode: 'no-cors' // Use 'no-cors' mode to avoid CORS issues
+          })
+          .then(response => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Form Submitted',
+              text: 'Your request has been submitted successfully!',
+            });
+          })
+          .catch(error => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'There was an issue submitting the form.',
+            });
+            console.error('Error:', error);
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
