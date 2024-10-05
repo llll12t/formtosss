@@ -22,7 +22,7 @@
 
     <form id="factoryForm">
       <!-- Hidden Fields for ID and User -->
-      <input type="hidden" id="useridline" name="useridline" >
+      <input type="hidden" id="useridline" name="useridline">
       <input type="hidden" id="id" name="id" value="1">
       
       <!-- Name Field -->
@@ -77,7 +77,7 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script>
-    const LIFF_ID = '2005732932-OrLQnkw6'; // Liff id ไว้
+    const LIFF_ID = '2005732932-OrLQnkw6'; // Replace with your LIFF ID
 
     window.onload = async function () {
         await initializeLiff();
@@ -85,11 +85,11 @@
 
     async function initializeLiff() {
         try {
-            await liff.init({ liffId: `${LIFF_ID}` }); // Replace with your LIFF ID
+            await liff.init({ liffId: LIFF_ID }); // Initialize LIFF
             if (liff.isLoggedIn()) {
                 getUserProfile();
             } else {
-                liff.login();
+                liff.login(); // Prompt user to login if not logged in
             }
         } catch (error) {
             console.error('Error initializing LIFF:', error);
@@ -100,9 +100,7 @@
         try {
             const profile = await liff.getProfile();
             const userId = profile.userId;
-            document.getElementById('useridline').value = userId;
-            document.getElementById('displayName').value = profile.displayName;
-            await fetchAllData(userId);
+            document.getElementById('useridline').value = userId; // Set user ID to hidden input
         } catch (error) {
             console.error('Error getting profile data:', error);
         }
