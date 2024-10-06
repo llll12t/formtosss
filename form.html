@@ -134,7 +134,7 @@
       }
     });
 
-    document.getElementById('factoryForm').addEventListener('submit', function(e) {
+   document.getElementById('factoryForm').addEventListener('submit', function(e) {
   e.preventDefault();
 
   // Show confirmation dialog
@@ -182,15 +182,17 @@
       .then(response => {
         Swal.fire({
           icon: 'success',
-          title: 'Form Submitted',
-          text: 'Your request has been submitted successfully!',
+          title: 'บันทึกข้อมูลสำเร็จ',
+          text: 'ข้อมูลของคุณได้ถูกส่งเรียบร้อยแล้ว!',
+        }).then(() => {
+          liff.closeWindow(); // Close the LIFF app
         });
       })
       .catch(error => {
         Swal.fire({
           icon: 'error',
-          title: 'Error',
-          text: 'There was an issue submitting the form.',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'มีปัญหาในการส่งข้อมูล กรุณาลองใหม่อีกครั้ง',
         });
         console.error('Error:', error);
       })
