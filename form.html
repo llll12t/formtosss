@@ -176,6 +176,9 @@
               icon: 'success',
               title: 'Form Submitted',
               text: 'Your request has been submitted successfully!',
+              didOpen: () => {
+                Swal.showLoading();
+            }
             });
           })
           .catch(error => {
@@ -183,6 +186,9 @@
               icon: 'error',
               title: 'Error',
               text: 'There was an issue submitting the form.',
+              didOpen: () => {
+                Swal.showLoading();
+            }
             });
             console.error('Error:', error);
           });
