@@ -316,38 +316,38 @@
         // View full details in a modal
         function viewDetails(rowIndex, id, name, date, details, checkin, checkout, status, note) {
             Swal.fire({
-                title: `<h3 class="text-xl font-semibold text-left">Access Request Details</h3>`,
+                title: `<h3 class="text-xl font-semibold text-left">รายละเอียดคำขอ</h3>`,
                 html: `
           <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-width: 400px; margin: 0 auto; background-color: #f9f9f9;">
             <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
               <p style="display: flex; justify-content: space-between;">
-                <strong>Name:</strong> <span>${name}</span>
+                <strong>ชื่อ สกุล:</strong> <span>${name}</span>
               </p>
               <p style="display: flex; justify-content: space-between;">
-                <strong>Date:</strong> <span>${date}</span>
+                <strong>วันที่:</strong> <span>${date}</span>
               </p>
             </div>
             <div style="padding-bottom: 10px;">
               <p style="display: flex; justify-content: space-between;">
-                <strong>Details:</strong> <span>${details}</span>
+                <strong>เหตุผลการเข้า:</strong> <span>${details}</span>
               </p>
             </div>
             <div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
               <p style="display: flex; justify-content: space-between;">
-                <strong>Check-in:</strong> <span>${checkin}</span>
+                <strong>เวลาที่เข้า:</strong> <span>${checkin}</span>
               </p>
               <p style="display: flex; justify-content: space-between;">
-                <strong>Check-out:</strong> <span>${checkout}</span>
-              </p>
-            </div>
-            <div style="padding-bottom: 10px;">
-              <p style="display: flex; justify-content: space-between;">
-                <strong>Status:</strong> <span>${status}</span>
+                <strong>เวลาออก:</strong> <span>${checkout}</span>
               </p>
             </div>
             <div style="padding-bottom: 10px;">
               <p style="display: flex; justify-content: space-between;">
-                <strong>Note:</strong> <span>${note}</span>
+                <strong>สถานะ:</strong> <span>${status}</span>
+              </p>
+            </div>
+            <div style="padding-bottom: 10px;">
+              <p style="display: flex; justify-content: space-between;">
+                <strong>หมายเหตุ:</strong> <span>${note}</span>
               </p>
             </div>
           </div>
