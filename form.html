@@ -134,67 +134,73 @@
       }
     });
 
-    // Form submission logic with SweetAlert2 confirmation
     document.getElementById('factoryForm').addEventListener('submit', function(e) {
-      e.preventDefault();
+  e.preventDefault();
 
-      // Show confirmation dialog
+  // Show confirmation dialog
+  Swal.fire({
+    title: 'ยืนยันการส่งข้อมูล?',
+    text: 'คุณต้องการส่งคำขอเข้าโรงงานหรือไม่?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'ใช่, ส่งเลย!',
+    cancelButtonText: 'ยกเลิก'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Show loading
       Swal.fire({
-        title: 'ยืนยันการส่งข้อมูล?',
-        text: 'คุณต้องการส่งคำขอเข้าโรงงานหรือไม่?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'ใช่, ส่งเลย!',
-        cancelButtonText: 'ยกเลิก'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Prepare form data as an object
-          var formData = {
-            id: document.getElementById('id').value,
-            useridline: document.getElementById('useridline').value,
-            name: document.getElementById('name').value,
-            date: document.getElementById('date').value,
-            checkin: document.getElementById('checkin').value,
-            checkout: document.getElementById('checkout').value,
-            reason: document.getElementById('reason').value,
-            note: document.getElementById('note').value,
-            totalTime: document.getElementById('totalTime').value,
-            status: "รอการอนุมัติ"
-          };
-
-          // Send data via POST request to the Google Apps Script
-          fetch('https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData),
-            mode: 'no-cors' // Use 'no-cors' mode to avoid CORS issues
-          })
-          .then(response => {
-            Swal.fire({
-              icon: 'success',
-              title: 'Form Submitted',
-              text: 'Your request has been submitted successfully!',
-              didOpen: () => {
-                Swal.showLoading();
-            }
-            });
-          })
-          .catch(error => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'There was an issue submitting the form.',
-              didOpen: () => {
-                Swal.showLoading();
-            }
-            });
-            console.error('Error:', error);
-          });
+        title: 'กำลังส่งข้อมูล...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
       });
-    });
+
+      // Prepare form data as an object
+      var formData = {
+        id: document.getElementById('id').value,
+        useridline: document.getElementById('useridline').value,
+        name: document.getElementById('name').value,
+        date: document.getElementById('date').value,
+        checkin: document.getElementById('checkin').value,
+        checkout: document.getElementById('checkout').value,
+        reason: document.getElementById('reason').value,
+        note: document.getElementById('note').value,
+        totalTime: document.getElementById('totalTime').value,
+        status: "รอการอนุมัติ"
+      };
+
+      // Send data via POST request to the Google Apps Script
+      fetch('https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData),
+        mode: 'no-cors' // Use 'no-cors' mode to avoid CORS issues
+      })
+      .then(response => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Form Submitted',
+          text: 'Your request has been submitted successfully!',
+        });
+      })
+      .catch(error => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'There was an issue submitting the form.',
+        });
+        console.error('Error:', error);
+      })
+      .finally(() => {
+        Swal.hideLoading(); // Hide loading after completion
+      });
+    }
+  });
+});
+
   </script>
 </body>
 </html>
