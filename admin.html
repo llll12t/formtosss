@@ -93,9 +93,16 @@
     </div>
 
     <script>
-        const sheetDataUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=getData';
-        const updateStatusUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=updateStatus';
-        const updateTimesUrl = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec?action=updateTimes';
+
+
+        // URL ของ Web App ที่คุณ Deploy ไว้
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx_A9rqutSKSFy7Zo3brNuv5b3JV-36kYoDqfgn2g5IXg2Hu0MDSWZIuA_Q8lRIWiyDKA/exec'; 
+        
+
+
+        const sheetDataUrl = `${WEB_APP_URL}?action=getData`;
+        const updateStatusUrl = `${WEB_APP_URL}?action=updateStatus`;
+        const updateTimesUrl = `${WEB_APP_URL}?action=updateTimes`;
 
         let requestData = []; // Store data for filtering
 
@@ -170,7 +177,7 @@
         // Function to update the status (Approve/Reject)
         function updateStatus(id, newStatus, rowIndex) {
             Swal.fire({
-                title: `บันทึกสถาน ${newStatus} (เพิ่มเติมความเห็น) `,
+                title: `<h3 class="text-xl font-semibold text-left">บันทึกสถาน ${newStatus} (เพิ่มเติมความเห็น)</h3>`,
                 input: 'textarea',
                 inputPlaceholder: 'เพิ่มเติม...',
                 showCancelButton: true,
@@ -215,8 +222,8 @@
             const statusSelectValue = existingCheckIn ? 'ดำเนินการเสร็จสิ้น' : 'เข้าโรงงานแล้ว';
 
             Swal.fire({
-            title: '<h2 class="text-xl font-bold text-gray-700">ดำเนินการ: บันทึกเวลาเข้างานและออกงานจริง</h2>',
-            html: `
+                title: '<h2 class="text-xl font-bold text-gray-700">ดำเนินการ: บันทึกเวลาเข้างานและออกงานจริง</h2>',
+                html: `
             <div class="flex flex-col space-y-4">
                 <div>
                 <label class="block text-left font-medium text-gray-600">เวลาเข้า:</label>
@@ -235,14 +242,14 @@
                 </div>
             </div>
             `,
-            customClass: {
-                popup: 'p-6 rounded-lg shadow-lg border',
-            },
+                customClass: {
+                    popup: 'p-6 rounded-lg shadow-lg border',
+                },
 
 
                 showCancelButton: true,
-                confirmButtonText: 'Submit',
-                cancelButtonText: 'Cancel',
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
                 preConfirm: () => {
                     const actualCheckIn = document.getElementById('actualCheckIn').value;
                     const actualCheckOut = document.getElementById('actualCheckOut').value;
