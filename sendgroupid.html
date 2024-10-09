@@ -1,72 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ส่งข้อความไปยัง Group</title>
+    <title>ส่ง Flex Message ไปยัง Group</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 </head>
+
 <body>
-<div class="bg-gradient-to-br from-gray-100 to-blue-100 h-screen flex justify-center items-center">
-    <div class="bg-white p-8 rounded shadow-md text-center w-96">
-        <h1 class="text-2xl font-bold mb-4">ส่งข้อความไปยัง Group</h1>
-        <button id="sendMessageBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            ส่งข้อความ
-        </button>
+    <div class="bg-gradient-to-br from-gray-100 to-blue-100 h-screen flex justify-center items-center">
+        <div class="bg-white p-8 rounded shadow-md text-center w-96">
+            <h1 class="text-2xl font-bold mb-4">ส่ง Flex Message ไปยัง Group</h1>
+            <button id="sendMessageBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                ส่งข้อความ
+            </button>
+        </div>
     </div>
-</div>
 
-<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
-<script>
-    const LIFF_ID = '2005629952-VGeldJag'; // ใส่ LIFF ID ของคุณที่นี่
-    const GROUP_ID = '217f2d4d-133f-49f7-bd88-2cba661f0eab'; // Group ID ที่ต้องการส่งข้อความ
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+    <script>
+        const LIFF_ID = '2005629952-VGeldJag'; // ใส่ LIFF ID ของคุณที่นี่
+        const GROUP_ID = '217f2d4d-133f-49f7-bd88-2cba661f0eab'; // Group ID ที่ต้องการส่งข้อความ
 
-    // ฟังก์ชันเริ่มต้น LIFF SDK
-    window.onload = function () {
-        initializeLiff();
-    };
+        // ฟังก์ชันเริ่มต้น LIFF SDK
+        window.onload = function () {
+            initializeLiff();
+        };
 
-    async function initializeLiff() {
-        try {
-            // เริ่มต้น LIFF SDK
-            await liff.init({ liffId: LIFF_ID });
+        async function initializeLiff() {
+            try {
+                // เริ่มต้น LIFF SDK
+                await liff.init({ liffId: LIFF_ID });
 
-            // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
-            if (!liff.isLoggedIn()) {
-                liff.login();
+                // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                }
+            } catch (error) {
+                console.error('เกิดข้อผิดพลาดในการเริ่มต้น LIFF:', error);
+                Swal.fire('Error', 'เกิดข้อผิดพลาดในการเริ่มต้น LIFF', 'error');
             }
-        } catch (error) {
-            console.error('เกิดข้อผิดพลาดในการเริ่มต้น LIFF:', error);
-            Swal.fire('Error', 'เกิดข้อผิดพลาดในการเริ่มต้น LIFF', 'error');
         }
-    }
 
-    // ฟังก์ชันสำหรับส่งข้อความไปยัง Group ID
-    async function sendMessageToGroup() {
-        try {
-            const message = {
-                type: 'text',
-                text: 'สวัสดีครับ ข้อความนี้ส่งไปยัง Group!'
-            };
+        // ฟังก์ชันสำหรับส่ง Flex Message ไปยัง Group ID
+        async function sendFlexMessageToGroup() {
+            try {
+                const flexMessage = {
+                    type: "flex",
+                    altText: "นี่คือ Flex Message",
+                    contents: {
+                        type: "bubble",
+                        hero: {
+                            type: "image",
+                            url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQzk92qOx7c5k5fybjVbUkwg6BGW_ptjgID9A&s", // ใส่ URL ของรูปภาพที่ต้องการ
+                            size: "full",
+                            aspectRatio: "20:13",
+                            aspectMode: "cover"
+                        },
+                        body: {
+                            type: "box",
+                            layout: "vertical",
+                            contents: [
+                                {
+                                    type: "text",
+                                    text: "สวัสดีครับ",
+                                    weight: "bold",
+                                    size: "xl"
+                                },
+                                {
+                                    type: "text",
+                                    text: "ข้อความนี้ถูกส่งไปยัง Group!"
+                                }
+                            ]
+                        }
+                    }
+                };
 
-            await liff.sendMessages([message]).then(() => {
-                Swal.fire('Success', 'ข้อความถูกส่งไปยัง Group เรียบร้อยแล้ว!', 'success');
-            }).catch((err) => {
-                console.error('Error sending message:', err);
-                Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่งข้อความ', 'error');
-            });
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', 'ไม่สามารถส่งข้อความได้', 'error');
+                await liff.sendMessages([flexMessage]).then(() => {
+                    Swal.fire('Success', 'Flex Message ถูกส่งไปยัง Group เรียบร้อยแล้ว!', 'success');
+                }).catch((err) => {
+                    console.error('Error sending Flex Message:', err);
+                    Swal.fire('Error', 'เกิดข้อผิดพลาดในการส่ง Flex Message', 'error');
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'ไม่สามารถส่ง Flex Message ได้', 'error');
+            }
         }
-    }
 
-    // Event Listener สำหรับปุ่มส่งข้อความ
-    document.getElementById('sendMessageBtn').addEventListener('click', function () {
-        sendMessageToGroup();
-    });
-</script>
+        // Event Listener สำหรับปุ่มส่งข้อความ
+        document.getElementById('sendMessageBtn').addEventListener('click', function () {
+            sendFlexMessageToGroup();
+        });
+    </script>
 </body>
+
 </html>
