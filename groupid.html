@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แสดง Group ID/Room ID</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+</head>
+<body>
+<div class="bg-gradient-to-br from-gray-100 to-blue-100 h-screen flex justify-center items-center">
+    <div class="bg-white p-8 rounded shadow-md text-center w-96">
+        <h1 class="text-2xl font-bold mb-4">Group/Room ID</h1>
+        <div id="groupIdDisplay" class="text-gray-700 text-lg mb-4">Loading...</div>
+        <button id="refreshBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Refresh ID
+        </button>
+    </div>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+<script>
+    const LIFF_ID = 'XXXXXXXXXX-XXXXXXXXXXXXX'; // ใส่ LIFF ID ของคุณที่นี่
+
+    // ฟังก์ชันเริ่มต้น LIFF SDK
+    window.onload = function () {
+        initializeLiff();
+    };
+
+    async function initializeLiff() {
+        try {
+            // เริ่มต้น LIFF SDK
+            await liff.init({ liffId: LIFF_ID });
+            
+            // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            } else {
+                showGroupOrRoomId();
+            }
+        } catch (error) {
+            console.error('เกิดข้อผิดพลาดในการเริ่มต้น LIFF:', error);
+            document.getElementById('groupIdDisplay').textContent = 'เกิดข้อผิดพลาดในการเริ่มต้น LIFF';
+        }
+    }
+
+    // ฟังก์ชันสำหรับดึง groupId หรือ roomId
+    async function getGroupOrRoomId() {
+        const context = liff.getContext();
+        if (context.type === "group") {
+            console.log("Group ID:", context.groupId);
+            return context.groupId;
+        } else if (context.type === "room") {
+            console.log("Room ID:", context.roomId);
+            return context.roomId;
+        } else {
+            console.log("This is not a group or room");
+            return null;
+        }
+    }
+
+    // ฟังก์ชันสำหรับแสดง groupId หรือ roomId บนหน้าเว็บ
+    async function showGroupOrRoomId() {
+        const id = await getGroupOrRoomId();
+        const groupIdDisplay = document.getElementById('groupIdDisplay');
+
+        if (id) {
+            groupIdDisplay.textContent = `Group/Room ID: ${id}`;
+        } else {
+            groupIdDisplay.textContent = "This is not a group or room";
+        }
+    }
+
+    // ปุ่ม refresh สำหรับดึง Group/Room ID ใหม่
+    document.getElementById('refreshBtn').addEventListener('click', function () {
+        showGroupOrRoomId();
+    });
+</script>
+</body>
+</html>
